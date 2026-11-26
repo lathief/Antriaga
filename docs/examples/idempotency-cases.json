@@ -1,0 +1,109 @@
+{
+  "description": "Setiap kasus memakai satu client dan database terisolasi. Body adalah teks asli. Kasus email berlaku untuk ANT-03. Kasus webhook dapat dipakai untuk canonicalizer terlebih dahulu, lalu diulang pada use case saat tipe webhook tersedia.",
+  "default_payload_version": 1,
+  "default_max_attempts": 5,
+  "initial_mysql_time": "2029-12-31T23:59:00.000Z",
+  "cases": [
+    {
+      "id": "object-order-whitespace",
+      "first": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"}}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "same",
+        "body": "{ \"payload\":{\"template\":\"welcome\",\"subject\":\"Welcome\",\"to\":\"sample@example.com\"}, \"type\":\"email.send\" }",
+        "expect": "same_job"
+      }
+    },
+    {
+      "id": "effective-defaults",
+      "first": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"}}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"},\"queue\":\"email\",\"payload_version\":1,\"max_attempts\":5}",
+        "expect": "same_job"
+      }
+    },
+    {
+      "id": "equivalent-timestamp-after-due",
+      "first": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"},\"scheduled_at\":\"2030-01-01T07:00:00+07:00\"}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"},\"scheduled_at\":\"2030-01-01T00:00:00.000Z\"}",
+        "expect": "same_job"
+      },
+      "second_mysql_time": "2030-01-01T00:00:01.000Z"
+    },
+    {
+      "id": "null-immediate",
+      "first": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"}}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"},\"scheduled_at\":null}",
+        "expect": "same_job"
+      }
+    },
+    {
+      "id": "array-order",
+      "first": {
+        "key": "same",
+        "body": "{\"type\":\"webhook.deliver\",\"payload\":{\"event\":\"order.completed\",\"reference_id\":\"ORD-10021\",\"data\":{\"items\":[\"a\",\"b\"],\"total\":1}}}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "same",
+        "body": "{\"type\":\"webhook.deliver\",\"payload\":{\"event\":\"order.completed\",\"reference_id\":\"ORD-10021\",\"data\":{\"items\":[\"b\",\"a\"],\"total\":1}}}",
+        "expect": "conflict_409"
+      }
+    },
+    {
+      "id": "numeric-token",
+      "first": {
+        "key": "same",
+        "body": "{\"type\":\"webhook.deliver\",\"payload\":{\"event\":\"order.completed\",\"reference_id\":\"ORD-10021\",\"data\":{\"items\":[\"a\",\"b\"],\"total\":1}}}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "same",
+        "body": "{\"type\":\"webhook.deliver\",\"payload\":{\"event\":\"order.completed\",\"reference_id\":\"ORD-10021\",\"data\":{\"items\":[\"a\",\"b\"],\"total\":1.0}}}",
+        "expect": "conflict_409"
+      }
+    },
+    {
+      "id": "key-case",
+      "first": {
+        "key": "Event-A",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"}}",
+        "expect": "create"
+      },
+      "second": {
+        "key": "event-a",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"template\":\"welcome\"}}",
+        "expect": "create"
+      }
+    },
+    {
+      "id": "decoded-duplicate-name",
+      "first": null,
+      "second": {
+        "key": "same",
+        "body": "{\"type\":\"email.send\",\"payload\":{\"to\":\"sample@example.com\",\"subject\":\"Welcome\",\"\\u0073ubject\":\"Again\",\"template\":\"welcome\"}}",
+        "expect": "invalid_400"
+      }
+    }
+  ]
+}
