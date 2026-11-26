@@ -32,9 +32,22 @@ Catatan ini memuat perubahan dokumen dan kontrak blueprint yang sudah ditulis. E
 
 - Mempertahankan token angka webhook dengan kolom payload teks JSON tervalidasi, mengisolasi idempotensi payment mock per client, dan melindungi pesan belum delivered saat trimming Redis.
 
+### Fixed (documentation only, review 26 November 2026)
+
+- Memilih satu aturan jadwal: insert baru dengan `scheduled_at` yang tidak lebih besar dari waktu MySQL ditolak (`422`). Retry identik tetap menemukan job asal.
+- Menyeragamkan nama variabel pepper menjadi `AUTH_KEY_PEPPER_B64` dan menambah kolom `api_keys.pepper_version`.
+- Menyelaraskan ERD dengan DDL (`payload` teks, `idempotency_key` biner, kolom `priority`, `started_at`, `request_hash`).
+- Menetapkan seq outbox pertama job terjadwal (2) dan aturan parsing key `SplitN(…, "_", 4)`.
+- Mengganti path modul placeholder dengan `github.com/lathief/Antriaga`, mem-pin `swag` v1.16.6, dan mencatat Go 1.26 untuk Fiber v3.7.0.
+- Menambah catatan Windows (tanpa `make`, `-race` butuh CGO) dan catatan limiter per replica.
+
+### Added (documentation only, review 26 November 2026)
+
+- `CONTRIBUTING.md`, [template task](docs/ai/task-template.md), [kerangka runbook](docs/runbooks/README.md), dan [template ADR](design/adr/ADR-0000-template.md).
+
 ### Added (agent planning)
 
-- [Kartu tugas awal](docs/ai/implementation-plan.md), [matriks verifikasi](docs/ai/verification.md), [catatan keputusan](docs/ai/decisions.md), dan [format handoff](docs/ai/worklog.md).
+- [Rencana implementasi M1](docs/ai/implementation-plan.md), [matriks verifikasi](docs/ai/verification.md), [catatan keputusan](docs/ai/decisions.md), dan [format handoff](docs/ai/worklog.md).
 - [Backlog setelah MVP](docs/post-mvp.md) dengan prasyarat, pemicu, dan kriteria selesai per kandidat.
 
 Status runtime masih menunggu implementasi. Lihat [desain sistem](SYSTEM_DESIGN.md) untuk kontrak lengkap.

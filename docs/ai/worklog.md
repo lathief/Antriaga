@@ -29,6 +29,15 @@ Catat satu entri per pekerjaan. Gunakan ID kartu atau issue, dan sertakan commit
 - **Bukti** — pemeriksaan Python dan `bash -n` mencakup 138 tautan lokal, contoh Bash/JSON, dan kecocokan kontrak kolom, error mock, serta aturan cutoff trimming.
 - **Berikutnya** — ANT-01, lalu skema dan submit. Uji round-trip angka webhook dan payment mock ketika handler tersedia. Uji cleanup Redis pada milestone P1.
 
+## Task 1 — Perbaikan dokumen hasil review (branch `docs/review-fixes`)
+
+- **Tujuan dan status:** menutup temuan review 26 November 2026. Selesai, belum di-commit.
+- **Berkas:** `SYSTEM_DESIGN.md`, `AGENTS.md`, `CHANGELOG.md`, `README.md`, `docs/README.md`, `docs/reference/configuration.md`, `docs/getting-started/installation.md`, `docs/ai/implementation-plan.md`. Baru: `CONTRIBUTING.md`, `docs/ai/task-template.md`, `docs/runbooks/README.md`, `design/adr/ADR-0000-template.md`.
+- **Perubahan kontrak:** aturan `scheduled_at` masa lalu (ditolak 422), nama `AUTH_KEY_PEPPER_B64`, kolom `api_keys.pepper_version`, seq outbox pertama job terjadwal (2), parsing key `SplitN(…, "_", 4)`, ERD diselaraskan dengan DDL.
+- **Pemeriksaan:** skrip Python sementara memeriksa 161 tautan relatif Markdown: 0 rusak (LULUS). Klaim 130 dan 138 tautan pada entri lama tidak diverifikasi ulang dan tidak ada skripnya di repositori.
+- **Belum dijalankan:** lint Markdown dan seluruh tes runtime (belum ada kode).
+- **Berikutnya:** Task 2 (fondasi Go dan `scripts/check.ps1`), setelah branch ini di-review dan di-merge.
+
 ## Format entri
 
 ```text

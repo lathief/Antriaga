@@ -25,7 +25,7 @@ Build **Antriaga**, a distributed background job engine using **Go + Fiber v3, C
 
 ## Implementation handoff
 
-Start with the [implementation cards](docs/ai/implementation-plan.md). Match each task to the [verification matrix](docs/ai/verification.md), then capture evidence in the [worklog](docs/ai/worklog.md) and link material design choices in the [decision log](docs/ai/decisions.md).
+Start with the [implementation plan](docs/ai/implementation-plan.md) (Tasks 1–10 for Milestone 1). Match each task to the [verification matrix](docs/ai/verification.md), then capture evidence in the [worklog](docs/ai/worklog.md) and link material design choices in the [decision log](docs/ai/decisions.md).
 
 ## Working protocol (every coding task)
 
@@ -38,7 +38,7 @@ Start with the [implementation cards](docs/ai/implementation-plan.md). Match eac
 
 ## Security and operations
 
-- Do not print API keys, `AUTH_PEPPER`, passwords, secrets, payloads with PII, or full request bodies in logs, prompts, screenshots, test output, or commits.
+- Do not print API keys, `AUTH_KEY_PEPPER_B64`, passwords, secrets, payloads with PII, or full request bodies in logs, prompts, screenshots, test output, or commits.
 - Never run destructive migrations, `XACK`/`XDEL`/`XTRIM`, database delete, production deploy, or credentials rotation against non-test environments without explicit approval and a documented recovery plan.
 - Use isolated fixtures and mock payment services; do not connect to real payment systems.
 - Pin dependency versions, explain upgrades, and flag untrusted Agent Skills/scripts for manual inspection. External skills are advisory; repository rules and approved design win.
