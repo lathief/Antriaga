@@ -47,6 +47,8 @@ flowchart LR
 
 ## Task 1: Perbaikan dokumen dan kerangka proyek
 
+> **Status:** dikerjakan di branch `docs/review-fixes` (lihat entri worklog). Skrip `scripts/check.ps1` ditunda ke Task 2.
+
 - **Tujuan:** menutup ketidaksesuaian dokumen.
 - **Panduan:**
   - Tambah `docs/ai/task-template.md` (template §37.3) dan `CONTRIBUTING.md`.
@@ -177,7 +179,9 @@ flowchart LR
 
 - Go 1.26 mungkin belum terpasang. Jika belum, Task 2 berhenti dan melapor.
 - Tes Testcontainers membutuhkan Docker Desktop berjalan. Jika tidak, hasilnya NOT RUN.
-- Workspace belum berupa repositori git. Inisialisasi git sebelum Task 2 agar perubahan dapat dibatalkan.
+- `make` biasanya tidak terpasang di Windows. Gunakan `scripts/check.ps1`.
+- `go test -race` di Windows butuh `CGO_ENABLED=1` dan kompiler C. Jika tidak ada, catat NOT RUN lokal dan jalankan di CI.
+- Parser API key harus memakai `SplitN(key, "_", 4)` karena secret base64url boleh memuat `_` (uji di Task 6).
 
 ## Setelah M1
 

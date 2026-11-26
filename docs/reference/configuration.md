@@ -35,6 +35,10 @@
 | Auth | `API_KEY_DEFAULT_EXPIRY_DAYS` | 90 initial |
 | Auth | `AUTH_MAX_API_KEY_LENGTH` | 256 (max header length policy) |
 
+## Catatan limiter
+
+`API_RATE_LIMIT_PER_CLIENT_RPS` berlaku **per replica API**. Dengan N replica, laju efektif per client dapat mencapai N kali nilai itu. Kuota job aktif (`API_MAX_OUTSTANDING_PER_CLIENT`) dihitung di MySQL dan tidak bergantung pada jumlah replica.
+
 ## Konfigurasi aman
 
 - Jangan menaruh `AUTH_KEY_PEPPER_B64`, password DB/Redis, atau MinIO secret di Git.

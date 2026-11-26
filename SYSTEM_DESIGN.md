@@ -509,6 +509,7 @@ erDiagram
         char_36 id PK
         char_36 client_id FK
         binary_32 secret_digest
+        smallint pepper_version
         json scopes
         varchar_16 status
     }
@@ -517,18 +518,21 @@ erDiagram
         char_36 client_id FK
         varchar_100 queue
         varchar_100 type
-        json payload
+        mediumtext payload
         smallint payload_version
         json result
         varchar_24 status
+        smallint priority
         int attempts
         int max_attempts
         bigint enqueue_seq
         datetime scheduled_at
+        datetime started_at
         varchar_128 lease_owner
         char_36 lease_token
         datetime lease_expires_at
-        varchar_150 idempotency_key UK
+        varbinary_150 idempotency_key
+        char_64 request_hash
     }
     JOB_ATTEMPTS {
         bigint id PK
@@ -874,7 +878,7 @@ FOR UPDATE SKIP LOCKED;
 
 Untuk masing-masing job pada batch, dalam transaksi yang sama:
 
-1. `enqueue_seq += 1` (**untuk scheduled awal gunakan generation konsisten; disepakati seq 1 saat create dan naik saat release menjadi queued**).
+1. `enqueue_seq += 1`. Job terjadwal dibuat dengan `enqueue_seq = 1` tanpa outbox, jadi outbox ready pertamanya memakai seq 2 saat release. Job immediate memakai seq 1 pada outbox pertamanya. Setiap outbox `(job_id, enqueue_seq)` bersifat unik.
 2. Ubah `status` menjadi `queued`, `scheduled_at = NULL` (atau simpan immutable scheduled time di audit event bila diperlukan).
 3. Insert `outbox_events(event_type='job.ready', status='pending', enqueue_seq=<new_seq>, available_at=db_now)` dengan waktu MySQL sesuai §9.1.
 4. Commit, biarkan outbox dispatcher melakukan publish.
@@ -1083,7 +1087,7 @@ import (
     "context"
     "time"
 
-    "github.com/your-org/antriaga/internal/domain"
+    "github.com/lathief/Antriaga/internal/domain"
 )
 
 type JobRepository interface {
@@ -1263,7 +1267,7 @@ Queue **diturunkan dari registry**. Untuk kompatibilitas dengan request desain a
 }
 ```
 
-Server menolak scheduled time yang salah format, terlalu jauh di masa lampau (policy configurable), atau job type yang belum didukung.
+Server menolak scheduled time yang salah format, yang tidak lebih besar dari waktu MySQL saat insert baru (`422`), atau job type yang belum didukung. Retry identik dengan `Idempotency-Key` yang sama tetap menemukan job asal setelah jadwal lewat (§27.7).
 
 ### 12.5 Pagination dan error envelope
 
@@ -1306,7 +1310,7 @@ Semua request `POST` perlu timeout yang berbeda dari timeout eksekusi handler; H
 ### 13.1 Instalasi dependency
 
 ```bash
-go mod init github.com/your-org/antriaga
+go mod init github.com/lathief/Antriaga
 
 go get github.com/gofiber/fiber/v3
 go get github.com/gofiber/contrib/v3/swaggo
@@ -1314,10 +1318,10 @@ go get github.com/swaggo/swag
 go get gorm.io/gorm gorm.io/driver/mysql
 go get github.com/redis/go-redis/v9
 
-go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/cmd/swag@v1.16.6
 ```
 
-`@latest` di atas cocok untuk bootstrap lokal; **pin** versi CLI pada workflow/Makefile CI agar generated docs reproducible.
+Pin versi sejak awal. Per November 2026, Fiber v3.7.0 dan `github.com/gofiber/contrib/v3/swaggo` mensyaratkan **Go 1.26.0**, dengan `swag` v1.16.6 dan `swaggo/files/v2` v2.0.2. Verifikasi ulang `go.mod` upstream sebelum menaikkan versi, dan jangan memakai `@latest` pada workflow/Makefile CI agar generated docs reproducible.
 
 ### 13.2 General API annotation
 
@@ -1381,7 +1385,7 @@ import (
     "github.com/gofiber/fiber/v3"
     swaggo "github.com/gofiber/contrib/v3/swaggo"
 
-    _ "github.com/your-org/antriaga/docs"
+    _ "github.com/lathief/Antriaga/docs"
 )
 
 func main() {
@@ -2537,7 +2541,7 @@ ant_live_<key-id-uuid>_<base64url-32-random-bytes>
 ant_test_<key-id-uuid>_<base64url-32-random-bytes>
 ```
 
-`ant_live` dan `ant_test` adalah label lingkungan, **bukan** pengganti isolasi environment. Gunakan DB dan `AUTH_KEY_PEPPER` terpisah per lingkungan. `key_id` berguna untuk lookup dengan indeks, bukan untuk autentikasi. Jangan menerima `client_id` dari request body/header sebagai sumber identitas: **server menurunkannya dari API key terverifikasi**.
+`ant_live` dan `ant_test` adalah label lingkungan, **bukan** pengganti isolasi environment. Gunakan DB dan `AUTH_KEY_PEPPER_B64` terpisah per lingkungan. Saat mem-parse, pecah header dengan batas empat bagian (`SplitN(key, "_", 4)` menghasilkan `ant`, env, `key_id`, secret). `key_id` UUID tidak memuat `_`, tetapi secret base64url boleh memuat `_` dan `-`, jadi jangan memecah tanpa batas. `key_id` berguna untuk lookup dengan indeks, bukan untuk autentikasi. Jangan menerima `client_id` dari request body/header sebagai sumber identitas: **server menurunkannya dari API key terverifikasi**.
 
 ### 27.2 Database: `clients` dan `api_keys`
 
@@ -2565,6 +2569,7 @@ CREATE TABLE api_keys (
     label VARCHAR(100) NOT NULL,
     environment VARCHAR(12) NOT NULL,
     secret_digest BINARY(32) NOT NULL,
+    pepper_version SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     scopes JSON NOT NULL,
     status VARCHAR(16) NOT NULL DEFAULT 'active',
     expires_at DATETIME(3) NULL,
@@ -2652,7 +2657,7 @@ func Verify(plaintext string, storedDigest []byte, pepper []byte) bool {
 }
 ```
 
-Kunci HMAC `AUTH_KEY_PEPPER` wajib bernilai acak minimal 32 bytes (contohnya dalam representasi base64, lalu decode saat bootstrap). Jika pepper diputar, gunakan `pepper_version`/dual-verify selama periode transisi dan rencana penggantian semua key; kehilangan pepper akan menginvalidasi kemampuan memverifikasi key lama. Karena secret sudah 256-bit random, HMAC-SHA256 cukup untuk lookup aman; ini **berbeda** dari password manusia yang perlu password-hashing khusus. Pertahankan penggunaan `hmac.Equal` dan batasi panjang header sebelum mem-parsing.
+Kunci HMAC `AUTH_KEY_PEPPER_B64` wajib bernilai acak minimal 32 bytes (representasi base64, di-decode saat bootstrap). Kolom `api_keys.pepper_version` (default 1) mencatat pepper yang dipakai untuk digest. MVP hanya mendukung versi 1. Jika pepper diputar kelak, gunakan dual-verify per versi selama periode transisi dan rencana penggantian semua key; kehilangan pepper akan menginvalidasi kemampuan memverifikasi key lama. Karena secret sudah 256-bit random, HMAC-SHA256 cukup untuk lookup aman; ini **berbeda** dari password manusia yang perlu password-hashing khusus. Pertahankan penggunaan `hmac.Equal` dan batasi panjang header sebelum mem-parsing.
 
 ### 27.4 Alur autentikasi dan authorization di Fiber
 
@@ -3457,7 +3462,7 @@ build:
 verify: fmt-check vet test build
 ```
 
-Perhatikan: target `fmt-check` memakai `find` POSIX sehingga dapat berbeda pada Windows; gunakan script Go/CI alternatif jika perlu. `test-integration` butuh tag/path nyata, Docker/Testcontainers, dan migrasi test. `swag-check` hanya valid jika CLI Swaggo sudah **dipin** dan generated docs dikomit. Atur error handling Makefile ketika folder `examples` belum tersedia saat Milestone 1.
+Perhatikan: target `fmt-check` memakai `find` POSIX, dan `make` biasanya tidak terpasang di Windows. Sediakan `scripts/check.ps1` yang menjalankan `gofmt -l`, `go vet`, `go test`, dan `go build`. CI Linux memakai target Makefile di atas. `go test -race` di Windows membutuhkan `CGO_ENABLED=1` dan kompiler C (mis. MinGW-w64). Jika tidak tersedia, catat gerbang race sebagai NOT RUN lokal dan jalankan di CI. `test-integration` butuh tag/path nyata, Docker/Testcontainers, dan migrasi test. `swag-check` hanya valid jika CLI Swaggo sudah **dipin** dan generated docs dikomit. Atur error handling Makefile ketika folder `examples` belum tersedia saat Milestone 1.
 
 ### 42.4 Gate penutupan milestone
 

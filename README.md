@@ -36,6 +36,7 @@ Antriaga dirancang sebagai layanan background-job terdistribusi berbasis **Go/Fi
 
 - [SECURITY.md](SECURITY.md): pelaporan keamanan privat (kontak perlu dikonfigurasi sebelum rilis)
 - [CHANGELOG.md](CHANGELOG.md): perubahan dokumentasi dan rilis yang terverifikasi
+- [CONTRIBUTING.md](CONTRIBUTING.md): alur kontribusi
 
 ## Dokumentasi dan kontribusi
 

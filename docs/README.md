@@ -34,7 +34,8 @@ Antriaga dirancang untuk menerima dan menjalankan job di latar belakang. Gunakan
 ## Pengembangan
 
 - [Paket kerja awal](ai/implementation-plan.md), [matriks verifikasi](ai/verification.md), dan [handoff](ai/worklog.md).
-- [Catatan keputusan](ai/decisions.md), [changelog](../CHANGELOG.md), dan [backlog setelah MVP](post-mvp.md).
+- [Catatan keputusan](ai/decisions.md), [template task](ai/task-template.md), [changelog](../CHANGELOG.md), dan [backlog setelah MVP](post-mvp.md).
+- [Panduan kontribusi](../CONTRIBUTING.md), [template ADR](../design/adr/ADR-0000-template.md), dan [kerangka runbook P1](runbooks/README.md).
 
 ## Status dan konvensi
 

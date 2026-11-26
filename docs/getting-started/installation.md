@@ -43,6 +43,12 @@ Contoh pembuatan pepper (untuk local development saja):
 openssl rand -base64 32
 ```
 
+Alternatif PowerShell tanpa `openssl`:
+
+```powershell
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
 Simpan hasilnya ke secret manager / env runtime dengan akses terbatas. **Jangan** memasukkan secret ke dokumentasi atau issue tracker.
 
 ## Menyiapkan kredensial
