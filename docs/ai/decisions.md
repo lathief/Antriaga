@@ -15,4 +15,10 @@ Keputusan teknis lengkap tetap berada di [blueprint §23](../../SYSTEM_DESIGN.md
 | Trimming Redis menjaga batas delivery dan pending | Hanya prefix settled boleh dipotong, termasuk saat reconciler aktif | Blueprint §32 |
 | Key report unik per client, job, dan attempt | Hanya attempt dengan finalisasi yang sah menerbitkan referensi hasil | Blueprint §§9.2, 10.2 |
 
+| Insert baru dengan `scheduled_at` yang tidak lebih besar dari waktu MySQL ditolak (`422`) | Retry identik tetap menemukan job asal setelah jadwal lewat | Blueprint §§12.4, 27.7 |
+| Pepper bernama `AUTH_KEY_PEPPER_B64`, digest mencatat `api_keys.pepper_version` (MVP hanya versi 1) | Rotasi pepper ditunda ke P1. Kolom sudah tersedia agar tidak butuh migrasi ulang | Blueprint §27.2, §27.3, [backlog](../post-mvp.md) |
+| Outbox pertama job terjadwal memakai `enqueue_seq = 2` | Job dibuat dengan seq 1 tanpa outbox, lalu seq naik saat release | Blueprint §9.3 |
+| Parser API key memakai `SplitN(key, "_", 4)` | Secret base64url boleh memuat `_` | Blueprint §27.1 |
+| Bentuk respons job dan attempts ditetapkan di Task 9, sebelum handler ditulis | Keputusan field dicatat di sini lalu `api.md` diperbarui | [Rencana Task 9](implementation-plan.md) |
+
 Untuk entri baru, catat keputusan, alasan, konsekuensi untuk API/schema/tes, dan rujukan ke perubahan. Bukti eksekusi per tugas masuk ke [worklog](worklog.md).

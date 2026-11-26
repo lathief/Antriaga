@@ -15,6 +15,7 @@
 | 1 | Retensi history dan outbox, serta trimming Redis yang aman (§32) | Pertumbuhan data mulai membebani disk, backup, atau query | Cleanup berbatch. Pending/unacked dan state yang masih dibutuhkan recovery dilindungi. Simulasi restart dan recovery tetap lulus setelah cleanup. |
 | 2 | Requeue manual untuk job `dead` (§31) | Operator membutuhkan cara terkontrol untuk mengulang kegagalan yang sudah diperbaiki | Job baru tertaut ke asal, scope dan owner diperiksa, audit tercatat, request ulang tidak membuat dua job, dan kontrak idempotensi downstream diuji. |
 | 3 | Runbook insiden, SLO, dan latihan restore (§33) | Sudah ada baseline dan operator dapat mengukur backlog serta waktu pulih | Alert terhubung ke runbook. Latihan gangguan Redis dan restore MySQL menghasilkan waktu pemulihan serta hasil rekonsiliasi yang terdokumentasi. |
+| 4 | Rotasi pepper API key (dual-verify per `pepper_version`, §27.3) | Pepper diduga bocor atau kebijakan mewajibkan rotasi berkala | Key lama tetap terverifikasi selama masa transisi. Key diterbitkan ulang dengan versi baru, versi lama dinonaktifkan, dan prosedurnya diuji pada lingkungan terisolasi. |
 
 ## P2 — Riwayat yang dapat ditanyakan
 

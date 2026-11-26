@@ -41,6 +41,12 @@ Catatan ini memuat perubahan dokumen dan kontrak blueprint yang sudah ditulis. E
 - Mengganti path modul placeholder dengan `github.com/lathief/Antriaga`, mem-pin `swag` v1.16.6, dan mencatat Go 1.26 untuk Fiber v3.7.0.
 - Menambah catatan Windows (tanpa `make`, `-race` butuh CGO) dan catatan limiter per replica.
 
+### Changed (documentation only, tindak lanjut review kedua)
+
+- Memperbarui status Task 1 dan menandai klaim pemeriksaan tautan lama (130 dan 138) sebagai belum terverifikasi.
+- Menambah prasyarat lingkungan pada Task 2 dan keputusan bentuk respons sebelum handler pada Task 9.
+- Mencatat keputusan review di `docs/ai/decisions.md` dan memasukkan rotasi pepper ke backlog P1.
+
 ### Added (documentation only, review 26 November 2026)
 
 - `CONTRIBUTING.md`, [template task](docs/ai/task-template.md), [kerangka runbook](docs/runbooks/README.md), dan [template ADR](design/adr/ADR-0000-template.md).

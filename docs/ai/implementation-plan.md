@@ -47,7 +47,7 @@ flowchart LR
 
 ## Task 1: Perbaikan dokumen dan kerangka proyek
 
-> **Status:** dikerjakan di branch `docs/review-fixes` (lihat entri worklog). Skrip `scripts/check.ps1` ditunda ke Task 2.
+> **Status:** selesai dan sudah di-merge ke `master` (PR #1). Tindak lanjut review kedua dikerjakan di branch `docs/review-followup` (lihat [worklog](worklog.md)). Skrip `scripts/check.ps1` dibuat di Task 2.
 
 - **Tujuan:** menutup ketidaksesuaian dokumen.
 - **Panduan:**
@@ -63,7 +63,8 @@ flowchart LR
 
 - **Tujuan:** modul Go dengan API minimal yang dapat dites tanpa database.
 - **Panduan:**
-  - Periksa `go version` ≥ 1.26, lalu `go mod init github.com/lathief/Antriaga` dan pin dependensi.
+  - Prasyarat lingkungan, periksa dan catat hasilnya di worklog sebelum menulis kode: `go version` ≥ 1.26, `docker version` (Docker Desktop berjalan), dan kompiler C (`gcc --version`) untuk `go test -race`. Jika ada yang tidak tersedia, tandai gerbang terkait NOT RUN dan lapor.
+  - Setelah itu `go mod init github.com/lathief/Antriaga` dan `go mod init github.com/lathief/Antriaga` dan pin dependensi.
   - Buat `cmd/api`, `internal/platform/config` (validasi dan pesan teredaksi), `internal/platform/logger` (slog JSON, redaksi, events), middleware request-id dan access log, serta `GET /health/live`.
   - Buat `Makefile`, `scripts/check.ps1`, `.golangci.yml`, `.env.example`, dan `.github/workflows/ci.yml` (skeleton).
 - **Tes:** redaksi log, config invalid gagal startup tanpa membocorkan nilai, `app.Test` untuk liveness, korelasi `request_id`, dan tes batas impor (domain/application tanpa Fiber/GORM/go-redis).
@@ -159,7 +160,8 @@ flowchart LR
   - Buat DTO (`CreateJobRequest`, `JobResponse`, `ErrorResponse`, `AttemptResponse`), handler, router, error mapper (envelope §12.5), dan batas body 256 KiB (413).
   - Endpoint: `POST /jobs` (202), `GET /jobs`, `GET /jobs/:id`, `GET /jobs/:id/attempts`, `/health/ready` (MySQL dan draining, Redis dilaporkan degraded), `/metrics` dasar.
   - Tambah anotasi Swaggo, jalankan `swag init` dengan versi dipin tanpa menghapus Markdown di `docs/`, dan mount `/swagger/*` di balik `ENABLE_SWAGGER`.
-  - Sinkronkan `docs/reference/api.md` dan `errors.md` dengan DTO nyata (termasuk bentuk respons attempts yang final).
+  - **Sebelum menulis handler:** tetapkan bentuk respons untuk `GET /jobs/:id`, `GET /jobs`, dan `GET /jobs/:id/attempts` (nama field, tipe, field yang disembunyikan seperti `lease_token`, `payload`, dan `request_hash`). Catat keputusan di `decisions.md`, lalu tulis DTO dan tes kontraknya.
+  - Sinkronkan `docs/reference/api.md` dan `errors.md` dengan DTO nyata (termasuk bentuk respons attempts yang final). Hapus kalimat "belum difinalisasi" di `api.md` setelah itu.
 - **Tes:** `app.Test` per endpoint (status, header, envelope, auth, validasi), `swag-check` (`git diff --exit-code` untuk artefak generated), dan tes batas impor tetap lulus.
 - **Selesai ketika:** `curl` dengan key nyata membuat dan membaca job, dan Swagger UI terbuka secara lokal.
 - **Rujukan:** §§12–14, 45–47.
