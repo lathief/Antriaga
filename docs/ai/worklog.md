@@ -56,6 +56,21 @@ Catat satu entri per pekerjaan. Gunakan ID kartu atau issue, dan sertakan commit
 - **Belum dijalankan:** lint Markdown. Tidak ada tes runtime karena belum ada kode. Tidak ada demo, benchmark, atau status CI yang diklaim.
 - **Berikutnya:** Task 2 setelah branch ini di-merge. Pemindahan §36–§44 dijadwalkan setelah M1.
 
+## Review multi-peran (branch `docs/multirole-review`)
+
+- **Tujuan dan status:** mencatat hasil review dari lima peran ke dokumen. Hanya dokumen, tidak ada kode.
+- **Temuan per peran:**
+  - **Backend:** hitungan admisi global berbatas, SQL eksplisit di jalur panas.
+  - **DevOps/SRE:** grace period platform di atas 30 detik, kapasitas koneksi MySQL, `METRICS_ADDR` per binary, dashboard dan alert sebagai berkas, `govulncheck`, image GHCR, MySQL sebagai titik tunggal.
+  - **Principal:** positioning proyek di README dan ADR-0001 dengan pembanding alternatif.
+  - **Product owner:** halaman produk dengan pengguna dan tiga metrik sukses, catatan `priority` tidak diekspos.
+  - **Pengguna:** seed lokal untuk quickstart, `Location` dan penanda replay, field respons, error validasi per field. Callback saat selesai dan webhook terdaftar per client masuk backlog.
+- **Berkas:** `docs/ai/implementation-plan.md`, `docs/ai/decisions.md`, `docs/operations/deployment.md`, `docs/operations/monitoring.md`, `docs/reference/configuration.md`, `docs/reference/api.md`, `docs/getting-started/quickstart.md`, `docs/post-mvp.md`, `docs/README.md`, `README.md`, `CHANGELOG.md`. Baru: `docs/product.md`, `design/adr/ADR-0001-redis-streams-dengan-mysql-outbox.md`.
+- **Pemeriksaan:** pemeriksa tautan relatif dijalankan setelah perubahan, hasilnya dicatat di laporan commit.
+- **Belum dijalankan:** lint Markdown. Tidak ada tes runtime karena belum ada kode. Tidak ada klaim ukur, demo, atau status CI. Semua catatan baru berstatus rencana dan belum diverifikasi.
+- **Branch:** `docs/portfolio-reprioritize` sudah di-merge lewat PR #3, jadi pekerjaan ini memakai branch baru dari `master`.
+- **Berikutnya:** Task 2 setelah branch ini di-merge.
+
 ## Format entri
 
 ```text

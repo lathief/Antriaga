@@ -86,6 +86,8 @@ Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task b
   - Buat `cmd/api`, `internal/platform/config` (validasi dan pesan teredaksi), `internal/platform/logger` (slog JSON, redaksi, events), middleware request-id dan access log, serta `GET /health/live`.
   - Buat `Makefile`, `scripts/check.ps1`, `.golangci.yml`, dan `.env.example`.
   - Buat `.github/workflows/ci.yml` yang benar-benar berjalan, bukan sekadar skeleton. Mulai dari `gofmt -l`, `go vet`, dan `go test`, lalu tambah `-race`, tes integrasi Testcontainers, dan `swag-check` seiring tersedianya tiap bagian. Tujuannya badge CI hijau di README sebagai bukti kualitas. Jangan menambah badge sebelum workflow pernah lulus di GitHub.
+  - Tambahkan `govulncheck` ke workflow. Boleh dimulai sebagai langkah informatif (tidak menggagalkan build) lalu dijadikan gerbang setelah temuan awal ditangani.
+  - Rencana (belum diimplementasikan): setiap binary non-API (worker, dispatcher, scheduler, reaper) membuka port kecil untuk `/metrics` dan liveness lewat variabel `METRICS_ADDR`. Diimplementasikan seiring tiap proses dibuat, bukan di Task 2.
 - **Tes:** redaksi log, config invalid gagal startup tanpa membocorkan nilai, `app.Test` untuk liveness, korelasi `request_id`, dan tes batas impor (domain/application tanpa Fiber/GORM/go-redis).
 - **Selesai ketika:** `go build ./cmd/...` dan `go test ./...` lulus, dan `/health/live` menjawab 200.
 - **Rujukan:** §§3–5, §14.3, §16.
@@ -107,6 +109,8 @@ Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task b
 - **Panduan:**
   - Buat migrasi 000001 sampai 000005 (up/down) sesuai §7 dan §27.2. Migrasi `job_events` (P2) tidak dibuat.
   - Buat `deployments/Dockerfile` (stage `migrator` dan runtime non-root), `deployments/docker-compose.yml` (mysql sehat, lalu `migrate`, lalu `api`), dan target Makefile `up`, `down`, `migrate-*`.
+  - Set `stop_grace_period` untuk service worker di atas `WORKER_SHUTDOWN_GRACE` (mis. `40s`). Bawaan Compose 10 detik akan mem-SIGKILL worker sebelum drain 30 detik selesai. Lihat [deployment](../operations/deployment.md#grace-period-shutdown).
+  - Tambah perintah seed lokal (mis. target `make seed`) yang membuat satu client demo dan mencetak key demo sekali. Khusus lingkungan lokal, harus menolak berjalan bila `APP_ENV` bukan `local`, dan ditandai jelas bukan untuk produksi. Dikerjakan setelah admin CLI (Task 5) tersedia, dan dipakai quickstart dan smoke Task 10.
 - **Tes (Testcontainers MySQL 8.4):**
   - Migrasi dari kosong.
   - FK dan unique menolak pelanggaran.
@@ -146,6 +150,8 @@ Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task b
 - **Panduan:**
   - Buat use case `CreateJob` dengan dedup `(client_id, idempotency_key)` memakai hash canonical. Hash beda menghasilkan 409. Job type yang diterima mengikuti registry Task 3 (awalnya `email.send` dan `webhook.deliver`).
   - Buat unit of work di transaksi `READ COMMITTED`: lock client lalu job, kuota `API_MAX_OUTSTANDING_PER_CLIENT` (429), ambang global (503 `SYSTEM_BACKPRESSURE`), lalu insert job dan outbox immediate dengan `available_at` dari `UTC_TIMESTAMP(3)`.
+  - Hitungan admisi global dibuat berbatas (mis. `LIMIT n+1` dengan n = ambang, atau setara) agar tidak memindai seluruh job aktif pada tiap submit. Kuota per client sudah terbatas oleh `API_MAX_OUTSTANDING_PER_CLIENT`.
+  - Jalur panas (admisi, claim, heartbeat, finalisasi) memakai SQL eksplisit (`database/sql`) supaya urutan lock dan pembacaan `UTC_TIMESTAMP(3)` setelah lock terlihat jelas. GORM hanya untuk CRUD biasa. Catat sebagai keputusan di [decisions](decisions.md).
   - Job `scheduled` disimpan tanpa outbox.
   - Tabrakan unique saat serentak: rollback lalu baca pemenang.
   - Log `job.accepted` hanya setelah commit.
@@ -181,6 +187,12 @@ Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task b
   - Endpoint: `POST /jobs` (202), `GET /jobs`, `GET /jobs/:id`, `GET /jobs/:id/attempts`, `/health/ready` (MySQL dan draining, Redis dilaporkan degraded), `/metrics` dasar.
   - Tambah anotasi Swaggo, jalankan `swag init` dengan versi dipin tanpa menghapus Markdown di `docs/`, dan mount `/swagger/*` di balik `ENABLE_SWAGGER`.
   - **Sebelum menulis handler:** tetapkan bentuk respons untuk `GET /jobs/:id`, `GET /jobs`, dan `GET /jobs/:id/attempts` (nama field, tipe, field yang disembunyikan seperti `lease_token`, `payload`, dan `request_hash`). Catat keputusan di `decisions.md`, lalu tulis DTO dan tes kontraknya.
+  - Tetapkan juga pada langkah yang sama:
+    - Header `Location` (URL job) pada respons `202`.
+    - Status dan penanda replay idempoten (mis. status berbeda atau header khusus) saat `Idempotency-Key` yang sama mengembalikan job lama.
+    - Field `result`, `error_code`, dan `next_run_at` pada respons job, serta nomor attempt dan `error_code` pada respons attempts.
+    - Error validasi `422` per field lewat daftar `details`.
+    - `priority` tidak diekspos pada MVP.
   - Sinkronkan `docs/reference/api.md` dan `errors.md` dengan DTO nyata (termasuk bentuk respons attempts yang final). Hapus kalimat "belum difinalisasi" di `api.md` setelah itu.
 - **Tes:** `app.Test` per endpoint (status, header, envelope, auth, validasi), `swag-check` (`git diff --exit-code` untuk artefak generated), dan tes batas impor tetap lulus.
 - **Selesai ketika:** `curl` dengan key nyata membuat dan membaca job, dan Swagger UI terbuka secara lokal.
@@ -190,7 +202,8 @@ Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task b
 
 - **Tujuan:** membuktikan M1 dari lingkungan bersih dan menutup review desain.
 - **Panduan:**
-  - Lengkapi Compose dan skrip smoke yang menjalankan quickstart sampai submit dan baca. Worker belum ada, jadi status tetap `queued`.
+  - Lengkapi Compose dan skrip smoke yang menjalankan quickstart sampai submit dan baca, memakai seed lokal dari Task 4. Worker belum ada, jadi status tetap `queued`.
+  - Target pengalaman pengguna: tiga perintah dari clone sampai job tercatat (`make up`, `make seed`, satu `curl` POST), lalu satu `curl` GET menampilkan `queued`. Setelah M2 selesai, target yang sama berakhir di `completed`.
   - Tandai bagian `docs/getting-started/*` dan README yang sudah terverifikasi dan yang masih planned.
   - Jalankan `go vet`, `go test -race ./...`, tes integrasi, `swag-check`, dan pemeriksaan tautan.
   - Rangkum temuan review desain di `worklog.md` dan `decisions.md`, tambah ADR bila ada keputusan baru, dan perbarui `CHANGELOG.md`.
@@ -204,6 +217,7 @@ Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task b
 - `make` biasanya tidak terpasang di Windows. Gunakan `scripts/check.ps1`.
 - `go test -race` di Windows butuh `CGO_ENABLED=1` dan kompiler C. Jika tidak ada, catat NOT RUN lokal dan jalankan di CI.
 - Parser API key harus memakai `SplitN(key, "_", 4)` karena secret base64url boleh memuat `_` (uji di Task 6).
+- **MySQL adalah titik tunggal kegagalan.** Ketersediaan sistem sama dengan ketersediaan MySQL. Target RPO dan RTO belum ditetapkan dan ditentukan setelah pengukuran. Catatannya ada di [deployment](../operations/deployment.md#ketersediaan-dan-titik-tunggal).
 - **Cakupan lebar dan risiko proyek mangkrak.** Empat job type, MinIO, tiga mock, metrik, dan fitur P1/P2 terlalu banyak untuk satu proyek solo. Mitigasi: ikuti [Prioritas portofolio](#prioritas-portofolio) dan jangan menambah fitur sebelum inti punya bukti.
 - **Rasio dokumen terhadap kode.** Saat ini dokumen jauh lebih banyak daripada kode, dan pengunjung repositori menilai dari kode, CI, dan demo. Mitigasi: kerjakan Task 2 sampai 10 sebelum menambah dokumen baru, dan hindari menyalin kode ke blueprint.
 - **Peran AI harus dapat dijelaskan lisan.** Pewawancara akan menanyakan bagian mana yang ditulis sendiri. Mitigasi: pastikan setiap keputusan konkurensi (lease, fencing, ACK, outbox) dapat dijelaskan tanpa membaca dokumen, dan siapkan jawaban jujur tentang peran AI.
@@ -219,7 +233,9 @@ Semua butir di bawah berstatus **direncanakan**. Tidak ada yang ditulis atau dij
 | c | README portofolio: diagram arsitektur satu layar, alasan proyek ada, tabel trade-off ringkas, cara menjalankan dalam tiga perintah, hasil demo, dan hasil ukur | Setelah a dan b | Tidak ditulis sekarang karena belum ada bukti |
 | d | Ringkasan arsitektur dan README versi bahasa Inggris. Kode, nama event, dan komentar kode memakai bahasa Inggris | Bersama c | Tautan dua bahasa dari README |
 | e | Pindahkan §36–§44 (proses AI) dari `SYSTEM_DESIGN.md` ke `docs/ai/` sebagai dokumen terpisah, lalu perbarui semua rujukan §36–§44 di `AGENTS.md`, `CHANGELOG.md`, rencana ini, dan dokumen lain | Setelah M1 selesai, agar rujukan tidak putus sekarang | Pemeriksa tautan 0 rusak dan tidak ada rujukan §36–§44 yang menggantung |
-| f | Dokumen "Pembanding alternatif" dan "Jawaban wawancara" (lihat di bawah) | Kerangka sekarang, angka setelah pengukuran | Bagian angka diisi dari hasil b |
+| f | Dokumen "Pembanding alternatif" dan "Jawaban wawancara" (lihat di bawah). Kerangka pembanding sudah ada di [ADR-0001](../../design/adr/ADR-0001-redis-streams-dengan-mysql-outbox.md), dan halaman [produk](../product.md) memuat pengguna dan metrik sukses | Kerangka sekarang, angka setelah pengukuran | Bagian angka diisi dari hasil b |
+| g | Satu dashboard Grafana (berkas JSON) dan berkas aturan alert (berkas, bukan hanya teks di dokumen), berdasarkan metrik di [monitoring](../operations/monitoring.md) | M3 | Berkas ada di repositori dan dimuat oleh Compose lokal. Tangkapan layar atau keluaran nyata dicatat di worklog |
+| h | Image berversi yang dipublikasikan ke GHCR pada rilis pertama, lewat workflow rilis | Rilis pertama, setelah M3 | Tag rilis dan workflow rilis yang pernah lulus |
 
 ### Metrik dasar dibangun bersama M2 dan M3
 
