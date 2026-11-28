@@ -21,4 +21,12 @@ Keputusan teknis lengkap tetap berada di [blueprint §23](../../SYSTEM_DESIGN.md
 | Parser API key memakai `SplitN(key, "_", 4)` | Secret base64url boleh memuat `_` | Blueprint §27.1 |
 | Bentuk respons job dan attempts ditetapkan di Task 9, sebelum handler ditulis | Keputusan field dicatat di sini lalu `api.md` diperbarui | [Rencana Task 9](implementation-plan.md) |
 
+| Cakupan awal dipangkas: `email.send` dan `webhook.deliver` dulu, `payment.capture` opsional, `report.generate` dan MinIO ditunda | Proyek portofolio harus selesai dan dapat dibuktikan. Kontrak job type yang ditunda tetap di blueprint | [Prioritas portofolio](implementation-plan.md#prioritas-portofolio), [backlog](../post-mvp.md) |
+| Demo crash satu perintah menjadi deliverable M3 | Bukti recovery yang bisa dipamerkan, bukan hanya dokumen | [Deliverable portofolio](implementation-plan.md#deliverable-portofolio-direncanakan) |
+| CI nyata sejak Task 2 (bukan skeleton) | Badge CI hijau sebagai sinyal kualitas. Badge baru dipasang setelah workflow pernah lulus | [Task 2](implementation-plan.md) |
+| Metrik Prometheus dasar dibangun bersama worker dan dispatcher (M2 dan M3) | Bahan untuk pengukuran dan demo, tidak menunggu M4 | [Metrik dasar](implementation-plan.md#metrik-dasar-dibangun-bersama-m2-dan-m3) |
+| README portofolio dan versi Inggris dijadwalkan setelah demo dan pengukuran | Tidak ada klaim demo atau angka sebelum ada keluaran nyata | [Deliverable c dan d](implementation-plan.md#deliverable-portofolio-direncanakan) |
+| Bagian proses AI (§36–§44) dipindah ke `docs/ai/` setelah M1 | Mengurangi penekanan pada proses AI di blueprint tanpa memutus rujukan sekarang | [Deliverable e](implementation-plan.md#deliverable-portofolio-direncanakan) |
+| Requeue dead job sederhana dipertimbangkan naik ke MVP, diputuskan di akhir M3 | Kelengkapan operasi dead job, bergantung pada waktu | [Opsi requeue](implementation-plan.md#opsi-requeue-dead-job-sederhana-ke-mvp) |
+
 Untuk entri baru, catat keputusan, alasan, konsekuensi untuk API/schema/tes, dan rujukan ke perubahan. Bukti eksekusi per tugas masuk ke [worklog](worklog.md).

@@ -11,6 +11,20 @@ Ambil satu task pada satu waktu. Baca rujukannya, periksa kode dan migrasi yang 
 - **Kode:** seluruh Milestone 1 (fondasi Go, domain, migrasi MySQL, CreateJob dengan outbox, admin CLI, auth/scope/ownership, endpoint POST/GET/list/attempts, Swaggo).
 - **Di luar cakupan:** dispatcher, Redis, worker, scheduler, reaper (M2 dan M3).
 
+## Prioritas portofolio
+
+Proyek ini dipakai sebagai portofolio backend middle/senior. Karena itu cakupan awal dipangkas agar proyek selesai dan dapat dibuktikan, tanpa mengubah kontrak desain di blueprint. Kontrak untuk job type yang ditunda tetap ada di blueprint dan tidak dihapus.
+
+| Tingkat | Cakupan | Alasan |
+|---|---|---|
+| Inti (wajib) | `email.send`, `webhook.deliver` | Cukup menunjukkan outbox, retry, idempotensi, recovery, dan preservasi token angka |
+| Opsional setelah inti stabil | `payment.capture` (mock saja) | Menunjukkan idempotensi downstream, tetapi bukan syarat demo |
+| Ditunda | `report.generate` dan MinIO | Menambah satu dependensi infrastruktur dan banyak aturan (key privat, cleanup, referensi hasil) dengan sedikit konsep baru. Lihat [backlog](../post-mvp.md) |
+
+**Urutan nilai:** M1 selesai, lalu M2 dan M3 (worker, scheduler, reaper) dengan demo crash, lalu README portofolio dengan angka nyata, baru fitur tambahan.
+
+**Aturan bukti:** tidak ada klaim demo, status CI, atau angka ukur sebelum ada keluaran nyata. Semua deliverable di bagian [Deliverable portofolio](#deliverable-portofolio-direncanakan) berstatus **direncanakan** sampai dikerjakan dan dicatat di [worklog](worklog.md).
+
 ## Keputusan masukan
 
 | Hal | Keputusan |
@@ -43,7 +57,11 @@ flowchart LR
     T7 --> T8[T8 Get/List/Attempts]
     T8 --> T9[T9 HTTP + Swaggo]
     T9 --> T10[T10 Compose E2E + Gate M1]
+    T10 -.-> M23[M2/M3 + demo crash + metrik dasar]
+    M23 -.-> POR[Ukur, README portofolio, fitur tambahan]
 ```
+
+Garis putus-putus adalah tahap setelah Task 10 yang belum dipecah menjadi task bernomor.
 
 ## Task 1: Perbaikan dokumen dan kerangka proyek
 
@@ -64,9 +82,10 @@ flowchart LR
 - **Tujuan:** modul Go dengan API minimal yang dapat dites tanpa database.
 - **Panduan:**
   - Prasyarat lingkungan, periksa dan catat hasilnya di worklog sebelum menulis kode: `go version` ≥ 1.26, `docker version` (Docker Desktop berjalan), dan kompiler C (`gcc --version`) untuk `go test -race`. Jika ada yang tidak tersedia, tandai gerbang terkait NOT RUN dan lapor.
-  - Setelah itu `go mod init github.com/lathief/Antriaga` dan `go mod init github.com/lathief/Antriaga` dan pin dependensi.
+  - Setelah itu `go mod init github.com/lathief/Antriaga` dan pin dependensi.
   - Buat `cmd/api`, `internal/platform/config` (validasi dan pesan teredaksi), `internal/platform/logger` (slog JSON, redaksi, events), middleware request-id dan access log, serta `GET /health/live`.
-  - Buat `Makefile`, `scripts/check.ps1`, `.golangci.yml`, `.env.example`, dan `.github/workflows/ci.yml` (skeleton).
+  - Buat `Makefile`, `scripts/check.ps1`, `.golangci.yml`, dan `.env.example`.
+  - Buat `.github/workflows/ci.yml` yang benar-benar berjalan, bukan sekadar skeleton. Mulai dari `gofmt -l`, `go vet`, dan `go test`, lalu tambah `-race`, tes integrasi Testcontainers, dan `swag-check` seiring tersedianya tiap bagian. Tujuannya badge CI hijau di README sebagai bukti kualitas. Jangan menambah badge sebelum workflow pernah lulus di GitHub.
 - **Tes:** redaksi log, config invalid gagal startup tanpa membocorkan nilai, `app.Test` untuk liveness, korelasi `request_id`, dan tes batas impor (domain/application tanpa Fiber/GORM/go-redis).
 - **Selesai ketika:** `go build ./cmd/...` dan `go test ./...` lulus, dan `/health/live` menjawab 200.
 - **Rujukan:** §§3–5, §14.3, §16.
@@ -75,8 +94,8 @@ flowchart LR
 
 - **Tujuan:** model domain bebas infrastruktur.
 - **Panduan:**
-  - Buat `Client`, `APIKey`, `Job`, `JobStatus`, `Attempt`, error domain (§11.3), dan registry `(type, payload_version)` ke queue untuk empat job type.
-  - Validasi payload `email.send` dulu, lalu skema tiga type lain.
+  - Buat `Client`, `APIKey`, `Job`, `JobStatus`, `Attempt`, error domain (§11.3), dan registry `(type, payload_version)` ke queue. Registry dirancang menampung empat job type, tetapi implementasi awal hanya `email.send` dan `webhook.deliver` (lihat [Prioritas portofolio](#prioritas-portofolio)).
+  - Validasi payload `email.send` dan `webhook.deliver`. Validasi `payment.capture` bersifat opsional, dan `report.generate` ditunda. Job type yang belum diimplementasikan ditolak sebagai `UNSUPPORTED_JOB_TYPE`.
   - Buat canonicalizer request (§27.7): tolak nama duplikat termasuk escape, urutkan nama objek, pertahankan token angka, normalisasi timestamp UTC milidetik, SHA-256 hex.
 - **Tes:** table-driven memakai [fixture canonical](../examples/idempotency-cases.json) dan invarian state machine (§6.3).
 - **Selesai ketika:** `go test ./internal/domain/...` lulus, termasuk semua kasus fixture.
@@ -125,7 +144,7 @@ flowchart LR
 
 - **Tujuan:** penerimaan job yang atomik dan idempoten.
 - **Panduan:**
-  - Buat use case `CreateJob` dengan dedup `(client_id, idempotency_key)` memakai hash canonical. Hash beda menghasilkan 409.
+  - Buat use case `CreateJob` dengan dedup `(client_id, idempotency_key)` memakai hash canonical. Hash beda menghasilkan 409. Job type yang diterima mengikuti registry Task 3 (awalnya `email.send` dan `webhook.deliver`).
   - Buat unit of work di transaksi `READ COMMITTED`: lock client lalu job, kuota `API_MAX_OUTSTANDING_PER_CLIENT` (429), ambang global (503 `SYSTEM_BACKPRESSURE`), lalu insert job dan outbox immediate dengan `available_at` dari `UTC_TIMESTAMP(3)`.
   - Job `scheduled` disimpan tanpa outbox.
   - Tabrakan unique saat serentak: rollback lalu baca pemenang.
@@ -157,6 +176,7 @@ flowchart LR
 
 - **Tujuan:** kontrak HTTP final M1.
 - **Panduan:**
+  - Dokumentasi dan contoh API hanya memuat job type yang sudah diimplementasikan. Contoh `payment.capture` dan `report.generate` di `docs/guides/job-types.md` tetap berstatus rencana.
   - Buat DTO (`CreateJobRequest`, `JobResponse`, `ErrorResponse`, `AttemptResponse`), handler, router, error mapper (envelope §12.5), dan batas body 256 KiB (413).
   - Endpoint: `POST /jobs` (202), `GET /jobs`, `GET /jobs/:id`, `GET /jobs/:id/attempts`, `/health/ready` (MySQL dan draining, Redis dilaporkan degraded), `/metrics` dasar.
   - Tambah anotasi Swaggo, jalankan `swag init` dengan versi dipin tanpa menghapus Markdown di `docs/`, dan mount `/swagger/*` di balik `ENABLE_SWAGGER`.
@@ -184,7 +204,46 @@ flowchart LR
 - `make` biasanya tidak terpasang di Windows. Gunakan `scripts/check.ps1`.
 - `go test -race` di Windows butuh `CGO_ENABLED=1` dan kompiler C. Jika tidak ada, catat NOT RUN lokal dan jalankan di CI.
 - Parser API key harus memakai `SplitN(key, "_", 4)` karena secret base64url boleh memuat `_` (uji di Task 6).
+- **Cakupan lebar dan risiko proyek mangkrak.** Empat job type, MinIO, tiga mock, metrik, dan fitur P1/P2 terlalu banyak untuk satu proyek solo. Mitigasi: ikuti [Prioritas portofolio](#prioritas-portofolio) dan jangan menambah fitur sebelum inti punya bukti.
+- **Rasio dokumen terhadap kode.** Saat ini dokumen jauh lebih banyak daripada kode, dan pengunjung repositori menilai dari kode, CI, dan demo. Mitigasi: kerjakan Task 2 sampai 10 sebelum menambah dokumen baru, dan hindari menyalin kode ke blueprint.
+- **Peran AI harus dapat dijelaskan lisan.** Pewawancara akan menanyakan bagian mana yang ditulis sendiri. Mitigasi: pastikan setiap keputusan konkurensi (lease, fencing, ACK, outbox) dapat dijelaskan tanpa membaca dokumen, dan siapkan jawaban jujur tentang peran AI.
+
+## Deliverable portofolio (direncanakan)
+
+Semua butir di bawah berstatus **direncanakan**. Tidak ada yang ditulis atau dijalankan di snapshot ini.
+
+| Kode | Deliverable | Kapan | Bukti selesai |
+|---|---|---|---|
+| a | Skrip demo crash satu perintah (mis. `make demo-crash` atau `scripts/demo-crash.ps1`) yang membunuh worker di tengah job dan menampilkan log recovery `reaper.job_recovered` untuk `job_id` yang sama | M3 | Keluaran skrip dan log nyata dicatat di worklog |
+| b | Load generator dan halaman hasil ukur: job per detik pada 1 vs 5 worker, p95 queue wait, waktu pemulihan, dan jumlah duplikasi efek yang terdeteksi | Akhir M3 | Angka berasal dari keluaran nyata, dengan profil beban dan spesifikasi mesin dicatat |
+| c | README portofolio: diagram arsitektur satu layar, alasan proyek ada, tabel trade-off ringkas, cara menjalankan dalam tiga perintah, hasil demo, dan hasil ukur | Setelah a dan b | Tidak ditulis sekarang karena belum ada bukti |
+| d | Ringkasan arsitektur dan README versi bahasa Inggris. Kode, nama event, dan komentar kode memakai bahasa Inggris | Bersama c | Tautan dua bahasa dari README |
+| e | Pindahkan §36–§44 (proses AI) dari `SYSTEM_DESIGN.md` ke `docs/ai/` sebagai dokumen terpisah, lalu perbarui semua rujukan §36–§44 di `AGENTS.md`, `CHANGELOG.md`, rencana ini, dan dokumen lain | Setelah M1 selesai, agar rujukan tidak putus sekarang | Pemeriksa tautan 0 rusak dan tidak ada rujukan §36–§44 yang menggantung |
+| f | Dokumen "Pembanding alternatif" dan "Jawaban wawancara" (lihat di bawah) | Kerangka sekarang, angka setelah pengukuran | Bagian angka diisi dari hasil b |
+
+### Metrik dasar dibangun bersama M2 dan M3
+
+Metrik Prometheus dasar tidak menunggu M4. Bangun bersama worker dan dispatcher: `antriaga_queue_depth`, `antriaga_outbox_oldest_pending_seconds`, `antriaga_worker_inflight`, `antriaga_worker_lease_lost_total`, dan `antriaga_outbox_pending`. Metrik ini juga menjadi bahan untuk deliverable b. Satu dashboard Grafana kecil bersifat opsional.
+
+### Kerangka dokumen pembanding dan jawaban wawancara (deliverable f)
+
+**Pembanding alternatif.** Satu tabel per alternatif dengan kolom: apa yang lebih sederhana, apa yang hilang, dan kapan alternatif itu lebih tepat.
+- MySQL sebagai queue dengan `SKIP LOCKED` saja (satu dependensi).
+- Redis saja (tanpa MySQL sebagai sumber kebenaran).
+- Kafka atau NATS JetStream.
+- Library siap pakai seperti Asynq atau River.
+
+**Jawaban wawancara.** Kerangka pertanyaan dengan jawaban jujur, dan kolom angka kosong sampai ada pengukuran:
+- Mengapa Redis Streams ditambah outbox MySQL, dan apa konsekuensinya (dua sumber kebenaran, kompleksitas recovery).
+- Bottleneck MySQL dari claim, heartbeat, dan finalisasi. Batas job per detik: *diisi setelah pengukuran*.
+- Konsekuensi lock row client pada admisi (submit per client diserialkan) dan kapan itu menjadi masalah: *diisi setelah pengukuran*.
+- Apa yang berbeda bila memakai Kafka atau JetStream.
+- Peran AI dalam proyek ini dan bagian yang dapat dijelaskan tanpa membaca dokumen.
+
+### Opsi: requeue dead job sederhana ke MVP
+
+Requeue manual `dead` sekarang berstatus P1 ([backlog](../post-mvp.md)). Reviewer dapat menganggap operasi dead job tanpa requeue kurang lengkap. **Keputusan ditunda ke akhir M3:** jika waktu cukup, ambil varian paling sederhana (job baru tertaut ke asal sesuai §31, scope dan owner diperiksa) dan catat keputusan di [decisions](decisions.md). Jika tidak, tetap P1.
 
 ## Setelah M1
 
-Pecah M2 dan M3 menjadi task dispatcher, worker, scheduler/retry, dan recovery. Gunakan [matriks verifikasi](verification.md) untuk menulis kriteria penerimaan. Ide di luar MVP ada di [backlog setelah MVP](../post-mvp.md).
+Pecah M2 dan M3 menjadi task dispatcher, worker, scheduler/retry, dan recovery. Gunakan [matriks verifikasi](verification.md) untuk menulis kriteria penerimaan. Ide di luar MVP ada di [backlog setelah MVP](../post-mvp.md). Nomor Task 1 sampai 10 tidak berubah, sehingga rujukan di worklog dan decisions tetap valid.

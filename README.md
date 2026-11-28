@@ -24,13 +24,26 @@ Antriaga dirancang sebagai layanan background-job terdistribusi berbasis **Go/Fi
 
 ## Cakupan MVP
 
-- `email.send`, `webhook.deliver`, `payment.capture`, `report.generate`
+Kontrak MVP di blueprint mencakup empat job type. Urutan pengerjaan dan statusnya:
+
+| Job type | Tahap pengerjaan |
+|---|---|
+| `email.send`, `webhook.deliver` | Inti, dikerjakan lebih dulu |
+| `payment.capture` | Opsional setelah inti stabil (mock saja) |
+| `report.generate` (dengan MinIO) | Ditunda, lihat [backlog](docs/post-mvp.md) |
+
+Semua berstatus **direncanakan**; belum ada yang diimplementasikan.
+
 - `POST /api/v1/jobs`, `GET /api/v1/jobs`, `GET /api/v1/jobs/:id`, `GET /api/v1/jobs/:id/attempts`
 - `X-API-Key` per client, scopes `jobs:create` dan `jobs:read`
 - MySQL sebagai source of truth; Redis Streams untuk delivery; **at-least-once**, bukan exactly-once
 - `payment.capture` **hanya ke mock payment gateway** pada MVP, bukan pembayaran sungguhan
 
 **Belum termasuk MVP:** public API key issuance, generic URL/script executor, manual requeue (P1), durable event timeline (P2), web dashboard, cancel API, dan priority scheduling nyata.
+
+## Prioritas pengembangan
+
+Pengerjaan dimulai dari `email.send` dan `webhook.deliver` (tabel di atas), dengan demo crash, hasil ukur, dan README portofolio yang dijadwalkan setelah ada bukti nyata. Rinciannya ada di [Prioritas portofolio](docs/ai/implementation-plan.md#prioritas-portofolio). README lengkap dengan diagram, demo, dan angka belum ditulis.
 
 ## Open-source project files
 
