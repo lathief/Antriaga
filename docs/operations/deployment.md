@@ -48,6 +48,30 @@ Jangan mengandalkan `AutoMigrate()` di production. Gunakan migration yang direvi
 
 Worker berhenti mengambil job baru, drain in-flight dalam grace period (awal 30 detik). Jika belum selesai, lease/PEL recovery melakukan pemulihan. Side effect bisa terjadi ulang; downstream idempotency wajib.
 
+### Grace period shutdown
+
+> **Catatan rencana, belum diverifikasi.**
+
+`WORKER_SHUTDOWN_GRACE` (30 detik) hanya berguna jika platform memberi waktu lebih lama dari itu sebelum SIGKILL. Bawaan Docker Compose `stop_grace_period` adalah 10 detik, sehingga worker dimatikan paksa sebelum drain selesai. Bawaan Kubernetes `terminationGracePeriodSeconds` adalah 30 detik, sama dengan grace aplikasi, jadi tidak ada sisa waktu untuk keluar bersih.
+
+Set grace platform sedikit di atas grace aplikasi (mis. 40 detik) untuk service worker. Pemulihan lease tetap menutup job yang terputus, tetapi shutdown bersih mengurangi lease yang harus kedaluwarsa dulu.
+
+## Kapasitas koneksi MySQL
+
+> **Catatan rencana, belum diverifikasi.**
+
+Total koneksi yang mungkin dibuka sama dengan jumlah proses dikali `MYSQL_MAX_OPEN_CONNS`. Nilai itu harus berada di bawah `max_connections` MySQL (bawaan 151), dengan sisa untuk admin dan migrasi. Contoh: 5 worker dengan pool 30 sudah 150 koneksi, terlalu dekat dengan batas bawaan.
+
+Setel pool per binary, bukan satu nilai untuk semua proses, lalu hitung totalnya setiap menambah replica. Worker dengan `WORKER_CONCURRENCY=10` yang memakai transaksi pendek biasanya tidak butuh pool sebesar API. Tentukan angkanya dari pengukuran.
+
+## Ketersediaan dan titik tunggal
+
+> **Catatan rencana, belum diverifikasi.**
+
+MySQL adalah sumber kebenaran sekaligus titik tunggal kegagalan. Ketersediaan sistem sama dengan ketersediaan MySQL, karena API, scheduler, dispatcher, worker, dan reaper semuanya bergantung padanya. Redis yang mati hanya menunda pengiriman, sedangkan MySQL yang mati menghentikan penerimaan dan eksekusi job.
+
+Target RPO dan RTO **belum ditetapkan**. Tentukan setelah backup dan latihan restore dijalankan dan waktunya terukur (lihat [backlog](../post-mvp.md) untuk latihan restore).
+
 ## Backup dan data retention
 
 Kebijakan retention/cleanup automated adalah **P1**, tetapi backup MySQL dan pembatasan disk perlu dilakukan sejak deployment pertama. Pada Redis 7, trim hanya prefix dengan bukti settled dari MySQL. Periksa posisi delivery dan batas PEL setiap group. Saat PEL kosong, pesan di atas `last-delivered-id` masih perlu dikirim. Tunda trim bila group dibentuk ulang atau bukti belum lengkap.

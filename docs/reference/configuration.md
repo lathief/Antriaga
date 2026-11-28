@@ -16,6 +16,8 @@
 | Redis | `REDIS_STREAM_PREFIX` | `antriaga:queue:` |
 | Worker | `WORKER_CONCURRENCY` | 10 slot per instance |
 | Worker | `REDIS_CONSUME_BATCH_MAX` | 10, tidak melebihi slot tersedia |
+| Worker | `PER_QUEUE_CONCURRENCY_<QUEUE>` | Opsional, dari [blueprint §28.1](../../SYSTEM_DESIGN.md). Membatasi slot per queue (mis. `PER_QUEUE_CONCURRENCY_EMAIL`) agar satu queue tidak memonopoli worker. Nama dan nilai bawaan ditetapkan saat worker diimplementasikan |
+| Observability | `METRICS_ADDR` | **Direncanakan.** Alamat listener `/metrics` dan liveness untuk proses non-API (worker, dispatcher, scheduler, reaper), mis. `:9100`. Bind ke jaringan internal saja |
 | Retry | `JOB_DEFAULT_MAX_ATTEMPTS` | 5 |
 | Retry | `RETRY_BASE_DELAY`, `RETRY_MAX_DELAY` | `5s`, `15m` |
 | Retry | `RETRY_JITTER_PERCENT` | 20 |
@@ -34,6 +36,10 @@
 | Auth | `API_KEY_ENVIRONMENT` | `test` atau `live` sesuai environment |
 | Auth | `API_KEY_DEFAULT_EXPIRY_DAYS` | 90 initial |
 | Auth | `AUTH_MAX_API_KEY_LENGTH` | 256 (max header length policy) |
+
+## Catatan koneksi MySQL
+
+`MYSQL_MAX_OPEN_CONNS` berlaku **per proses**. Total koneksi semua proses harus di bawah `max_connections` MySQL. Hitungan dan contohnya ada di [deployment](../operations/deployment.md#kapasitas-koneksi-mysql).
 
 ## Catatan limiter
 

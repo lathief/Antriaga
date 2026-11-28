@@ -21,6 +21,10 @@
 
 `GET /api/v1/jobs/:id/events` (P2), `POST /api/v1/jobs/:id/requeue` (P1), cancel dan queue control **tidak termasuk MVP**.
 
+**Catatan rencana (belum diimplementasikan):**
+- Kolom `priority` ada di database tetapi **tidak dihormati** dan **tidak diekspos** pada MVP.
+- Respons `202` direncanakan memuat header `Location` ke job yang dibuat, dan replay idempoten diberi penanda yang membedakannya dari job baru. Bentuk pastinya ditetapkan di Task 9 ([rencana](../ai/implementation-plan.md)) sebelum handler ditulis.
+
 ## `POST /api/v1/jobs`
 
 **Headers:** `X-API-Key`, `Content-Type: application/json`; `Idempotency-Key` opsional, 1–150 byte ASCII tercetak tanpa spasi, dibandingkan case-sensitive dalam satu client. Lihat [kontrak deduplikasi](../guides/submitting-jobs.md#idempotency-key-untuk-submit).

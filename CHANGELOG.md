@@ -41,6 +41,18 @@ Catatan ini memuat perubahan dokumen dan kontrak blueprint yang sudah ditulis. E
 - Mengganti path modul placeholder dengan `github.com/lathief/Antriaga`, mem-pin `swag` v1.16.6, dan mencatat Go 1.26 untuk Fiber v3.7.0.
 - Menambah catatan Windows (tanpa `make`, `-race` butuh CGO) dan catatan limiter per replica.
 
+### Added (documentation only, review multi-peran)
+
+- [Halaman produk](docs/product.md) (pengguna, masalah, tiga metrik sukses yang belum diukur) dan [ADR-0001](design/adr/ADR-0001-redis-streams-dengan-mysql-outbox.md) dengan tabel pembanding alternatif.
+- Catatan rencana di [deployment](docs/operations/deployment.md): grace period shutdown, kapasitas koneksi MySQL, dan MySQL sebagai titik tunggal kegagalan.
+- Variabel `METRICS_ADDR` dan `PER_QUEUE_CONCURRENCY_<QUEUE>` di [konfigurasi](docs/reference/configuration.md), serta catatan endpoint metrics per proses di [monitoring](docs/operations/monitoring.md). Semuanya direncanakan.
+- Paragraf positioning di README, dan dua kandidat backlog baru: callback saat job selesai dan webhook terdaftar per client.
+
+### Changed (documentation only, review multi-peran)
+
+- Rencana implementasi: `govulncheck` dan rencana `METRICS_ADDR` di Task 2, `stop_grace_period` dan seed lokal di Task 4, admisi global berbatas dan SQL eksplisit di Task 7, keputusan `Location`, penanda replay, field respons, dan error per field di Task 9, target tiga perintah di Task 10, deliverable g dan h, serta risiko titik tunggal MySQL.
+- Tidak ada klaim demo, status CI, atau angka ukur. Semuanya berstatus direncanakan.
+
 ### Changed (documentation only, review portofolio)
 
 - Menambah bagian [Prioritas portofolio](docs/ai/implementation-plan.md#prioritas-portofolio): cakupan inti `email.send` dan `webhook.deliver`, `payment.capture` opsional, `report.generate` dan MinIO ditunda ([backlog](docs/post-mvp.md)).

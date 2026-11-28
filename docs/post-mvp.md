@@ -26,6 +26,13 @@ Kontrak untuk item ini tetap ada di blueprint dan tidak dihapus. Item ini ditund
 | `report.generate` dan MinIO (§10.2, §32) | `email.send` dan `webhook.deliver` lulus E2E, demo crash berjalan, dan ada waktu untuk satu dependensi infrastruktur tambahan | Key report privat per client, job, dan attempt. Hanya attempt dengan finalisasi sah yang menerbitkan referensi hasil. Tes isolasi report antar client lulus, dan cleanup tidak menghapus file yang masih direferensikan. |
 | `payment.capture` mock (opsional, bukan penundaan penuh) | Inti stabil dan ingin menunjukkan idempotensi downstream | Idempotensi per client dan `payment_id`. Tuple berbeda dengan key sama menghasilkan konflik permanen tanpa capture tambahan. Retry identik menghasilkan satu capture per client. |
 
+## Kandidat dari review pengguna dan produk
+
+| Kandidat | Ambil saat | Kriteria selesai |
+|---|---|---|
+| Callback saat job mencapai status terminal (`completed` atau `dead`) ke endpoint terdaftar | Pengguna perlu tahu hasil job tanpa polling, dan inti M1 sampai M3 sudah stabil | Callback dikirim setelah commit status terminal, dengan retry terbatas dan idempotency key yang stabil. Tanda tangan HMAC pada body, dan kegagalan callback tidak mengubah status job. Callback ganda tidak merusak penerima yang idempoten. |
+| Endpoint webhook terdaftar per client lewat admin CLI | Client perlu mengirim `webhook.deliver` ke endpoint miliknya sendiri | Admin mendaftarkan URL per client (allowlist) dan secret tanda tangan per client. Client tidak pernah mengirim URL di payload. Tes SSRF menolak host internal dan redirect ke host yang tidak terdaftar. Client lain tidak dapat memakai endpoint ini. |
+
 ## P2 — Riwayat yang dapat ditanyakan
 
 | Kandidat | Ambil saat | Kriteria selesai |

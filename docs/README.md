@@ -35,6 +35,7 @@ Antriaga dirancang untuk menerima dan menjalankan job di latar belakang. Gunakan
 
 - [Paket kerja awal](ai/implementation-plan.md), [matriks verifikasi](ai/verification.md), dan [handoff](ai/worklog.md).
 - [Catatan keputusan](ai/decisions.md), [template task](ai/task-template.md), [changelog](../CHANGELOG.md), dan [backlog setelah MVP](post-mvp.md).
+- [Produk: pengguna dan metrik sukses](product.md) dan [ADR-0001: Redis Streams dengan MySQL outbox](../design/adr/ADR-0001-redis-streams-dengan-mysql-outbox.md).
 - [Panduan kontribusi](../CONTRIBUTING.md), [template ADR](../design/adr/ADR-0000-template.md), dan [kerangka runbook P1](runbooks/README.md).
 
 ## Status dan konvensi

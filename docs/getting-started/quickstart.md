@@ -20,6 +20,8 @@ test -n "${ANTRIAGA_API_KEY:-}" || echo "API key belum tersedia"
 
 Hindari menulis API key langsung dalam command shell / history atau log. Lihat [Authentication](../guides/authentication.md).
 
+> **Direncanakan, belum ada:** perintah seed lokal (mis. `make seed`) yang membuat satu client demo dan mencetak key demo sekali. Dengan itu langkah ini dapat dilewati untuk demo lokal. Seed hanya untuk lingkungan lokal (menolak berjalan bila `APP_ENV` bukan `local`) dan **bukan untuk produksi**. Lihat [rencana Task 4](../ai/implementation-plan.md).
+
 ## 3. Kirim job email demo
 
 ```bash

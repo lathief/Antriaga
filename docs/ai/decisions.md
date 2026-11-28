@@ -29,4 +29,15 @@ Keputusan teknis lengkap tetap berada di [blueprint §23](../../SYSTEM_DESIGN.md
 | Bagian proses AI (§36–§44) dipindah ke `docs/ai/` setelah M1 | Mengurangi penekanan pada proses AI di blueprint tanpa memutus rujukan sekarang | [Deliverable e](implementation-plan.md#deliverable-portofolio-direncanakan) |
 | Requeue dead job sederhana dipertimbangkan naik ke MVP, diputuskan di akhir M3 | Kelengkapan operasi dead job, bergantung pada waktu | [Opsi requeue](implementation-plan.md#opsi-requeue-dead-job-sederhana-ke-mvp) |
 
+| Hitungan admisi global berbatas (`LIMIT n+1` atau setara) | Menghindari scan seluruh job aktif pada tiap submit | [Task 7](implementation-plan.md) |
+| Jalur panas (admisi, claim, heartbeat, finalisasi) memakai SQL eksplisit, GORM hanya untuk CRUD | Urutan lock dan waktu MySQL setelah lock harus terlihat jelas | [Task 7](implementation-plan.md) |
+| Grace period platform di atas `WORKER_SHUTDOWN_GRACE` (mis. 40s) | Bawaan Compose 10s dan Kubernetes 30s membuat worker di-SIGKILL sebelum drain | [Deployment](../operations/deployment.md#grace-period-shutdown) |
+| Total koneksi MySQL = proses × pool, harus di bawah `max_connections` | Lima worker dengan pool 30 sudah 150 koneksi | [Deployment](../operations/deployment.md#kapasitas-koneksi-mysql) |
+| `METRICS_ADDR` per binary non-API untuk `/metrics` dan liveness | Worker dan proses lain perlu probe dan metrik | [Konfigurasi](../reference/configuration.md), [Monitoring](../operations/monitoring.md) |
+| MySQL dicatat sebagai titik tunggal kegagalan, RPO dan RTO ditetapkan setelah pengukuran | Mencegah klaim ketersediaan yang tidak terukur | [Deployment](../operations/deployment.md#ketersediaan-dan-titik-tunggal) |
+| ADR-0001 dan halaman produk | Menjelaskan alasan arsitektur, pembanding, pengguna, dan metrik sukses | [ADR-0001](../../design/adr/ADR-0001-redis-streams-dengan-mysql-outbox.md), [produk](../product.md) |
+| Seed lokal untuk quickstart | Mempercepat waktu ke job pertama, khusus lokal | [Task 4](implementation-plan.md), [quickstart](../getting-started/quickstart.md) |
+| `Location`, penanda replay, field respons, dan error validasi per field ditetapkan di Task 9 | Keputusan dicatat sebelum handler ditulis | [Task 9](implementation-plan.md) |
+| Callback saat selesai dan webhook terdaftar per client masuk backlog | Fitur dari review pengguna, bukan MVP | [Backlog](../post-mvp.md) |
+
 Untuk entri baru, catat keputusan, alasan, konsekuensi untuk API/schema/tes, dan rujukan ke perubahan. Bukti eksekusi per tugas masuk ke [worklog](worklog.md).

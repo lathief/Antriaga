@@ -49,6 +49,10 @@ Perintah mengasumsikan `jq` tersedia dan semua service menulis JSONL tanpa non-J
 
 Metric name adalah bagian dari **desain** yang perlu diuji setelah implementasi. Hindari `job_id`, `client_id` atau API key sebagai metric label untuk menghindari high cardinality/leakage.
 
+## Endpoint metrics dan liveness per proses (direncanakan)
+
+Selain API, setiap binary (worker, dispatcher, scheduler, reaper) direncanakan membuka listener kecil pada `METRICS_ADDR` untuk `/metrics` dan liveness. Port ini hanya untuk jaringan internal. Detail variabel ada di [konfigurasi](../reference/configuration.md). Belum diimplementasikan.
+
 ## Alert baseline (tune setelah load test)
 
 - Pending outbox berusia lebih dari 60 detik dan membesar.
@@ -56,6 +60,10 @@ Metric name adalah bagian dari **desain** yang perlu diuji setelah implementasi.
 - Tidak ada worker untuk queue yang berisi job.
 - Banyak dead jobs, Redis publish/ACK error, atau lease lost.
 - Readiness MySQL atau Redis kritis gagal.
+
+## Dashboard dan aturan alert sebagai berkas (direncanakan)
+
+Satu dashboard Grafana (JSON) dan satu berkas aturan alert direncanakan sebagai berkas di repositori, bukan hanya daftar di dokumen ini. Statusnya deliverable g di [rencana implementasi](../ai/implementation-plan.md#deliverable-portofolio-direncanakan), dikerjakan di M3. Belum ada.
 
 ## Lihat job history
 

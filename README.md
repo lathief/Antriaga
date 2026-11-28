@@ -41,6 +41,10 @@ Semua berstatus **direncanakan**; belum ada yang diimplementasikan.
 
 **Belum termasuk MVP:** public API key issuance, generic URL/script executor, manual requeue (P1), durable event timeline (P2), web dashboard, cancel API, dan priority scheduling nyata.
 
+## Tentang proyek ini
+
+Antriaga adalah proyek belajar dan portofolio untuk membuktikan pola keandalan pada sistem antrean: transactional outbox, lease dengan fencing, idempotensi, dan pemulihan setelah crash. Proyek ini **bukan pengganti** library atau layanan matang seperti River, Asynq, atau Temporal. Alasan memilih Redis Streams ditambah outbox MySQL, beserta pembandingnya, ada di [ADR-0001](design/adr/ADR-0001-redis-streams-dengan-mysql-outbox.md). Pengguna, masalah, dan metrik sukses ada di [halaman produk](docs/product.md).
+
 ## Prioritas pengembangan
 
 Pengerjaan dimulai dari `email.send` dan `webhook.deliver` (tabel di atas), dengan demo crash, hasil ukur, dan README portofolio yang dijadwalkan setelah ada bukti nyata. Rinciannya ada di [Prioritas portofolio](docs/ai/implementation-plan.md#prioritas-portofolio). README lengkap dengan diagram, demo, dan angka belum ditulis.
