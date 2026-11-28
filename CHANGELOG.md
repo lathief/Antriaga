@@ -41,6 +41,12 @@ Catatan ini memuat perubahan dokumen dan kontrak blueprint yang sudah ditulis. E
 - Mengganti path modul placeholder dengan `github.com/lathief/Antriaga`, mem-pin `swag` v1.16.6, dan mencatat Go 1.26 untuk Fiber v3.7.0.
 - Menambah catatan Windows (tanpa `make`, `-race` butuh CGO) dan catatan limiter per replica.
 
+### Changed (documentation only, review portofolio)
+
+- Menambah bagian [Prioritas portofolio](docs/ai/implementation-plan.md#prioritas-portofolio): cakupan inti `email.send` dan `webhook.deliver`, `payment.capture` opsional, `report.generate` dan MinIO ditunda ([backlog](docs/post-mvp.md)).
+- Menambah deliverable portofolio yang direncanakan (demo crash, ukur, README portofolio, versi Inggris, pemindahan bagian proses AI, dokumen pembanding), metrik dasar bersama M2/M3, opsi requeue sederhana, dan risiko baru. Task 2 mewajibkan CI yang benar-benar berjalan.
+- Tidak ada klaim demo, status CI, atau angka ukur. Semuanya berstatus direncanakan.
+
 ### Changed (documentation only, tindak lanjut review kedua)
 
 - Memperbarui status Task 1 dan menandai klaim pemeriksaan tautan lama (130 dan 138) sebagai belum terverifikasi.

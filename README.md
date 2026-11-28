@@ -32,6 +32,10 @@ Antriaga dirancang sebagai layanan background-job terdistribusi berbasis **Go/Fi
 
 **Belum termasuk MVP:** public API key issuance, generic URL/script executor, manual requeue (P1), durable event timeline (P2), web dashboard, cancel API, dan priority scheduling nyata.
 
+## Prioritas pengembangan
+
+Cakupan awal dipangkas ke `email.send` dan `webhook.deliver`, dengan demo crash, hasil ukur, dan README portofolio yang dijadwalkan setelah ada bukti nyata. Rinciannya ada di [Prioritas portofolio](docs/ai/implementation-plan.md#prioritas-portofolio). README lengkap dengan diagram, demo, dan angka belum ditulis.
+
 ## Open-source project files
 
 - [SECURITY.md](SECURITY.md): pelaporan keamanan privat (kontak perlu dikonfigurasi sebelum rilis)

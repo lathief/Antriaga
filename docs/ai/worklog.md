@@ -46,6 +46,16 @@ Catat satu entri per pekerjaan. Gunakan ID kartu atau issue, dan sertakan commit
 - **Belum dijalankan:** `go version`, `docker version`, `gcc --version`. Pengecekan itu menjadi langkah pertama Task 2.
 - **Berikutnya:** Task 2 setelah branch ini di-merge.
 
+## Review portofolio (branch `docs/portfolio-reprioritize`)
+
+- **Tujuan dan status:** menyesuaikan rencana untuk tujuan portofolio backend middle/senior. Rencana diperbarui, belum ada kode.
+- **Berkas:** `docs/ai/implementation-plan.md`, `docs/ai/decisions.md`, `docs/post-mvp.md`, `docs/ai/worklog.md`, `CHANGELOG.md`, `README.md`.
+- **Perubahan:** bagian Prioritas portofolio (inti `email.send` dan `webhook.deliver`), catatan cakupan di Task 3, 7, dan 9, CI nyata di Task 2, deliverable portofolio (demo crash, ukur, README, versi Inggris, pemindahan §36–§44, pembanding alternatif), metrik dasar bersama M2/M3, opsi requeue, dan risiko baru. Nomor Task 1 sampai 10 tidak berubah.
+- **Koreksi:** pada Task 2 ada duplikasi teks `go mod init` hasil edit sebelumnya, sudah dirapikan.
+- **Pemeriksaan:** pemeriksa tautan sementara (di luar repositori) dijalankan, hasil di bawah entri CHANGELOG dan laporan commit.
+- **Belum dijalankan:** lint Markdown. Tidak ada tes runtime karena belum ada kode. Tidak ada demo, benchmark, atau status CI yang diklaim.
+- **Berikutnya:** Task 2 setelah branch ini di-merge. Pemindahan §36–§44 dijadwalkan setelah M1.
+
 ## Format entri
 
 ```text

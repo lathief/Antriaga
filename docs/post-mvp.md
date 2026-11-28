@@ -17,6 +17,15 @@
 | 3 | Runbook insiden, SLO, dan latihan restore (§33) | Sudah ada baseline dan operator dapat mengukur backlog serta waktu pulih | Alert terhubung ke runbook. Latihan gangguan Redis dan restore MySQL menghasilkan waktu pemulihan serta hasil rekonsiliasi yang terdokumentasi. |
 | 4 | Rotasi pepper API key (dual-verify per `pepper_version`, §27.3) | Pepper diduga bocor atau kebijakan mewajibkan rotasi berkala | Key lama tetap terverifikasi selama masa transisi. Key diterbitkan ulang dengan versi baru, versi lama dinonaktifkan, dan prosedurnya diuji pada lingkungan terisolasi. |
 
+## Ditunda dari cakupan awal (keputusan portofolio)
+
+Kontrak untuk item ini tetap ada di blueprint dan tidak dihapus. Item ini ditunda agar cakupan inti selesai dulu (lihat [Prioritas portofolio](ai/implementation-plan.md#prioritas-portofolio)).
+
+| Kandidat | Ambil saat | Kriteria selesai |
+|---|---|---|
+| `report.generate` dan MinIO (§10.2, §32) | `email.send` dan `webhook.deliver` lulus E2E, demo crash berjalan, dan ada waktu untuk satu dependensi infrastruktur tambahan | Key report privat per client, job, dan attempt. Hanya attempt dengan finalisasi sah yang menerbitkan referensi hasil. Tes isolasi report antar client lulus, dan cleanup tidak menghapus file yang masih direferensikan. |
+| `payment.capture` mock (opsional, bukan penundaan penuh) | Inti stabil dan ingin menunjukkan idempotensi downstream | Idempotensi per client dan `payment_id`. Tuple berbeda dengan key sama menghasilkan konflik permanen tanpa capture tambahan. Retry identik menghasilkan satu capture per client. |
+
 ## P2 — Riwayat yang dapat ditanyakan
 
 | Kandidat | Ambil saat | Kriteria selesai |
